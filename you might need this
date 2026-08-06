@@ -1,0 +1,10 @@
+Assets
+│
+├── Prefabs
+│   └── ScratchEffect.prefab
+│
+├── Materials
+│   └── ScratchMaterial.mat
+│
+└── Textures
+    └── ScratchTexture.png
