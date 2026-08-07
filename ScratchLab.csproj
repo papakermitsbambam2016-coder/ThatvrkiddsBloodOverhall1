@@ -9,21 +9,26 @@
 
     <AssemblyName>ScratchLab</AssemblyName>
     <RootNamespace>ScratchLab</RootNamespace>
-
     <OutputType>Library</OutputType>
-
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="*.cs" />
-  </ItemGroup>
-
-  <!-- Update these HintPath values to wherever your BONELAB references are -->
-  <ItemGroup>
 
     <Reference Include="MelonLoader">
       <HintPath>References\MelonLoader.dll</HintPath>
+    </Reference>
+
+    <Reference Include="Assembly-CSharp">
+      <HintPath>References\Assembly-CSharp.dll</HintPath>
+    </Reference>
+
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>References\Il2CppInterop.Runtime.dll</HintPath>
+    </Reference>
+
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>References\Il2Cppmscorlib.dll</HintPath>
     </Reference>
 
     <Reference Include="UnityEngine.CoreModule">
@@ -48,18 +53,6 @@
 
     <Reference Include="UnityEngine.ImageConversionModule">
       <HintPath>References\UnityEngine.ImageConversionModule.dll</HintPath>
-    </Reference>
-
-    <Reference Include="Il2CppInterop.Runtime">
-      <HintPath>References\Il2CppInterop.Runtime.dll</HintPath>
-    </Reference>
-
-    <Reference Include="Il2Cppmscorlib">
-      <HintPath>References\Il2Cppmscorlib.dll</HintPath>
-    </Reference>
-
-    <Reference Include="Assembly-CSharp">
-      <HintPath>References\Assembly-CSharp.dll</HintPath>
     </Reference>
 
   </ItemGroup>
