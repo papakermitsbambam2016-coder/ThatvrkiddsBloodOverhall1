@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Thatvrkidds.ScratchLab
+namespace ScratchLab
 {
     internal static class Utilities
     {
