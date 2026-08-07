@@ -58,7 +58,3 @@ jobs:
         run: |
           echo "Looking for generated DLL..."
           find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.dll" -print
-What this does
-Instead of assuming:
-
-./ScratchLab.csproj
