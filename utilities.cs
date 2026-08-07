@@ -16,13 +16,22 @@ namespace ScratchLab
                 .Replace("-", "");
         }
 
-        public static bool NameContains(string value, string[] keywords)
+        public static bool NameContains(
+            string value,
+            string[] keywords)
         {
             value = Normalize(value);
 
+            if (string.IsNullOrEmpty(value) || keywords == null)
+                return false;
+
             foreach (string keyword in keywords)
             {
-                if (value.Contains(keyword))
+                if (string.IsNullOrEmpty(keyword))
+                    continue;
+
+                if (value.Contains(
+                    Normalize(keyword)))
                     return true;
             }
 
@@ -37,16 +46,35 @@ namespace ScratchLab
                 speed);
         }
 
-        public static Vector3 RandomDirection(Vector3 normal, float angle)
+        public static Vector3 RandomDirection(
+            Vector3 normal,
+            float angle)
         {
-            Quaternion rotation = Quaternion.AngleAxis(
-                Random.Range(-angle, angle),
-                normal);
+            if (normal.sqrMagnitude < 0.0001f)
+                normal = Vector3.up;
 
-            return rotation * Vector3.Cross(normal, Vector3.up);
+            normal.Normalize();
+
+            Vector3 tangent =
+                Vector3.Cross(normal, Vector3.up);
+
+            if (tangent.sqrMagnitude < 0.0001f)
+                tangent =
+                    Vector3.Cross(normal, Vector3.right);
+
+            tangent.Normalize();
+
+            Quaternion rotation =
+                Quaternion.AngleAxis(
+                    Random.Range(-angle, angle),
+                    normal);
+
+            return rotation * tangent;
         }
 
-        public static Color Fade(Color color, float alpha)
+        public static Color Fade(
+            Color color,
+            float alpha)
         {
             color.a = alpha;
             return color;
