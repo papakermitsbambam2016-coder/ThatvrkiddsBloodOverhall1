@@ -15,14 +15,21 @@ namespace ScratchLab
             if (Utilities.NameContains(obj.name, Config.NPCKeywords))
                 return true;
 
-            Transform parent = obj.transform.parent;
+            Transform current = obj.transform.parent;
 
-            while (parent != null)
+            while (current != null)
             {
-                if (Utilities.NameContains(parent.name, Config.NPCKeywords))
+                GameObject parentObject = current.gameObject;
+
+                if (parentObject.CompareTag("NPC"))
                     return true;
 
-                parent = parent.parent;
+                if (Utilities.NameContains(
+                    parentObject.name,
+                    Config.NPCKeywords))
+                    return true;
+
+                current = current.parent;
             }
 
             return false;
