@@ -3,16 +3,27 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <Nullable>disable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <ImplicitUsings>disable</ImplicitUsings>
 
+    <OutputType>Library</OutputType>
     <AssemblyName>ScratchLab</AssemblyName>
     <RootNamespace>ScratchLab</RootNamespace>
-    <OutputType>Library</OutputType>
+
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <!-- We explicitly include the .cs files below -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
+  <!-- C# source files -->
+  <ItemGroup>
+    <Compile Include="*.cs" />
+  </ItemGroup>
+
+  <!-- BONELAB / MelonLoader references -->
   <ItemGroup>
 
     <Reference Include="MelonLoader">
