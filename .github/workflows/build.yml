@@ -24,8 +24,11 @@ jobs:
           echo "Working directory:"
           pwd
           echo ""
-          echo "Root files:"
-          ls -la
-          echo ""
-          echo "All project files:"
+          echo "Project files:"
           find . -type f -name "*.csproj" -print
+
+      - name: Restore
+        run: dotnet restore ./ScratchLab.csproj
+
+      - name: Build
+        run: dotnet build ./ScratchLab.csproj --configuration Release --no-restore
