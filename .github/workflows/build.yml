@@ -19,16 +19,40 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Check repository files
+      - name: Check ScratchLab.csproj
         run: |
-          echo "Working directory:"
+          echo "Current directory:"
           pwd
+
           echo ""
-          echo "Project files:"
-          find . -type f -name "*.csproj" -print
+          echo "File listing:"
+          ls -la
+
+          echo ""
+          echo "Project file details:"
+          ls -lb ./ScratchLab.csproj
+
+          echo ""
+          echo "File information:"
+          file ./ScratchLab.csproj
+
+          echo ""
+          echo "Project file contents:"
+          head -20 ./ScratchLab.csproj
+
+          echo ""
+          echo "Absolute path:"
+          realpath ./ScratchLab.csproj
 
       - name: Restore
-        run: dotnet restore ./ScratchLab.csproj
+        run: |
+          PROJECT="$(realpath ./ScratchLab.csproj)"
+          echo "Restoring: $PROJECT"
+          dotnet restore "$PROJECT"
 
       - name: Build
-        run: dotnet build ./ScratchLab.csproj --configuration Release --no-restore
+        run: |
+          PROJECT="$(realpath ./ScratchLab.csproj)"
+          dotnet build "$PROJECT" --configuration Release --no-restore.
+
+
