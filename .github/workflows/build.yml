@@ -19,28 +19,27 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Locate project
-        id: locate
+      - name: Find and restore project
         shell: bash
         run: |
-          echo "Repository contents:"
-          find . -maxdepth 3 -type f -print
+          echo "Looking for ScratchLab.csproj..."
+          find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.csproj" -print
 
-          PROJECT=$(find . -maxdepth 3 -type f -name "ScratchLab.csproj" -print -quit)
+          PROJECT=$(find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.csproj" -print -quit)
 
           if [ -z "$PROJECT" ]; then
-            echo "ScratchLab.csproj was NOT found."
+            echo "ERROR: ScratchLab.csproj was not found."
             exit 1
           fi
 
-          echo "Found project: $PROJECT"
-          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
-
-      - name: Restore
-        run: dotnet restore "${{ steps.locate.outputs.project }}"
+          echo "Found: $PROJECT"
+          dotnet restore "$PROJECT"
 
       - name: Build
-        run: dotnet build "${{ steps.locate.outputs.project }}" --configuration Release --no-restore
+        shell: bash
+        run: |
+          PROJECT=$(find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.csproj" -print -quit)
+          dotnet build "$PROJECT" --configuration Release --no-restore
 
       - name: Upload ScratchLab.dll
         uses: actions/upload-artifact@v4
