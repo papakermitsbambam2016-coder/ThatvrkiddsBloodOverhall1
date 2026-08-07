@@ -2,23 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <OutputType>Library</OutputType>
-    <AssemblyName>ScratchLab</AssemblyName>
-    <RootNamespace>ScratchLab</RootNamespace>
-
-    <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-    <!-- We explicitly control which C# files are compiled -->
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="*.cs" />
-  </ItemGroup>
+    <Reference Include="MelonLoader">
+      <HintPath>References/MelonLoader.dll</HintPath>
+    </Reference>
 
-  <ItemGroup>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>References/Il2Cppmscorlib.dll</HintPath>
+    </Reference>
+
     <Reference Include="Assembly-CSharp">
       <HintPath>References/Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -32,7 +29,7 @@
     </Reference>
 
     <Reference Include="UnityEngine.ParticleSystemModule">
-      <HintPath>References/UnityEngine.ParticlesSystemModule.dll</HintPath>
+      <HintPath>References/UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
   </ItemGroup>
 
