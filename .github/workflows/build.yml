@@ -45,12 +45,3 @@ jobs:
           name: ScratchLab-DLL
           path: ./bin/Release/net6.0/ScratchLab.dll
           if-no-files-found: error
-Select Build ScratchLab.
-
-Run the workflow, or push a change to main.
-
-Wait for the green ✅ Success.
-
-Open that successful workflow run.
-
-Scroll down to Art
