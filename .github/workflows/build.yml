@@ -1,0 +1,38 @@
+name: Build ScratchLab
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Check project file
+        run: |
+          pwd
+          ls -la
+          test -f ScratchLab.csproj
+
+      - name: Restore
+        run: dotnet restore ./ScratchLab.csproj
+
+      - name: Build
+        run: dotnet build ./ScratchLab.csproj --configuration Release --no-restore
+
+      - name: Upload ScratchLab.dll
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScratchLab
+          path: ./bin/Release/**/ScratchLab.dll
