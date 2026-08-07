@@ -19,40 +19,46 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Check ScratchLab.csproj
+      - name: Find project
+        shell: bash
         run: |
-          echo "Current directory:"
-          pwd
+          echo "Looking for project files..."
 
-          echo ""
-          echo "File listing:"
-          ls -la
+          find "$GITHUB_WORKSPACE" -type f -name "*.csproj" -print
 
-          echo ""
-          echo "Project file details:"
-          ls -lb ./ScratchLab.csproj
+          PROJECT=$(find "$GITHUB_WORKSPACE" -type f -name "*.csproj" -print -quit)
 
-          echo ""
-          echo "File information:"
-          file ./ScratchLab.csproj
+          if [ -z "$PROJECT" ]; then
+            echo "No .csproj file found."
+            exit 1
+          fi
 
-          echo ""
-          echo "Project file contents:"
-          head -20 ./ScratchLab.csproj
+          echo "Using project:"
+          printf '<%s>\n' "$PROJECT"
 
-          echo ""
-          echo "Absolute path:"
-          realpath ./ScratchLab.csproj
+          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
 
       - name: Restore
         run: |
-          PROJECT="$(realpath ./ScratchLab.csproj)"
-          echo "Restoring: $PROJECT"
+          echo "Restoring:"
+          printf '<%s>\n' "$PROJECT"
           dotnet restore "$PROJECT"
 
       - name: Build
         run: |
-          PROJECT="$(realpath ./ScratchLab.csproj)"
-          dotnet build "$PROJECT" --configuration Release --no-restore.
+          echo "Building:"
+          printf '<%s>\n' "$PROJECT"
+          dotnet build "$PROJECT" --configuration Release --no-restore
 
+      - name: Show generated DLL
+        run: |
+          echo "Looking for generated DLL..."
+          find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.dll" -print
+      - name: Show generated DLL
+        run: |
+          echo "Looking for generated DLL..."
+          find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.dll" -print
+What this does
+Instead of assuming:
 
+./ScratchLab.csproj
