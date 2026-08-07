@@ -4,11 +4,24 @@ namespace ScratchLab
 {
     public class ScratchRenderer : MonoBehaviour
     {
-        public static ScratchRenderer Instance;
+        public static ScratchRenderer Instance { get; private set; }
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Object.Destroy(this);
+                return;
+            }
+
             Instance = this;
+            MelonLogger.Msg("[ScratchLab] ScratchRenderer initialized.");
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
         }
 
         public void SpawnScratch(
@@ -17,93 +30,87 @@ namespace ScratchLab
             Vector3 normal,
             float strength)
         {
+            if (target == null)
+                return;
+
+            if (normal.sqrMagnitude < 0.0001f)
+                normal = Vector3.up;
+
+            normal.Normalize();
+
             int count = Random.Range(
                 Config.ScratchCountMin,
                 Config.ScratchCountMax + 1);
 
-            Vector3 tangent =
-                Vector3.Cross(normal, Vector3.up);
-
-            if (tangent.sqrMagnitude < 0.01f)
-                tangent =
-                    Vector3.Cross(normal, Vector3.right);
-
-            tangent.Normalize();
-
-            Vector3 across =
-                Vector3.Cross(normal, tangent);
-
             for (int i = 0; i < count; i++)
             {
-                GameObject scratch =
-                    new GameObject("ScratchMark");
+                GameObject scratch = new GameObject("ScratchMark");
+
+                scratch.transform.position =
+                    point + normal * Config.ScratchSurfaceOffset;
+
+                scratch.transform.rotation =
+                    Quaternion.LookRotation(normal);
 
                 scratch.transform.SetParent(target, true);
-                scratch.transform.position = point;
 
                 LineRenderer line =
                     scratch.AddComponent<LineRenderer>();
 
                 line.useWorldSpace = false;
                 line.positionCount = 2;
+                line.loop = false;
+                line.alignment = LineAlignment.TransformZ;
+                line.textureMode = LineTextureMode.Stretch;
+                line.numCapVertices = 4;
+                line.numCornerVertices = 2;
 
-                float width =
-                    Random.Range(
-                        Config.ScratchMinWidth,
-                        Config.ScratchMaxWidth);
+                float width = Random.Range(
+                    Config.ScratchMinWidth,
+                    Config.ScratchMaxWidth);
 
                 line.startWidth = width;
-                line.endWidth = width * 0.55f;
+                line.endWidth = width * 0.45f;
 
-                line.numCapVertices = 8;
-                line.numCornerVertices = 8;
+                line.material = MaterialManager.ScratchMaterial;
 
-                line.material =
-                    new Material(
-                        Shader.Find("Sprites/Default"));
+                float length = Random.Range(
+                    Config.ScratchMinLength,
+                    Config.ScratchMaxLength);
 
-                line.material.color =
-                    Config.ScratchColor;
+                float angle = Random.Range(
+                    -Config.ScratchAngle,
+                    Config.ScratchAngle);
 
-                float length =
-                    Random.Range(
-                        Config.ScratchMinLength,
-                        Config.ScratchMaxLength);
-
-                float angle =
-                    Random.Range(-15f, 15f);
-
-                Quaternion rotation =
-                    Quaternion.AngleAxis(
-                        angle,
-                        normal);
+                Quaternion localRotation =
+                    Quaternion.Euler(0f, 0f, angle);
 
                 Vector3 direction =
-                    rotation * tangent;
+                    localRotation * Vector3.right;
 
-                Vector3 offset =
-                    across *
-                    Random.Range(-0.02f, 0.02f);
+                float offset = Random.Range(
+                    -Config.ScratchSpread,
+                    Config.ScratchSpread);
 
-                Vector3 start =
-                    offset -
-                    direction *
-                    (length * 0.5f);
+                Vector3 sideOffset =
+                    Vector3.up * offset;
 
-                Vector3 end =
-                    offset +
-                    direction *
-                    (length * 0.5f);
+                line.SetPosition(
+                    0,
+                    sideOffset - direction * (length * 0.5f));
 
-                line.SetPosition(0, start);
-                line.SetPosition(1, end);
+                line.SetPosition(
+                    1,
+                    sideOffset + direction * (length * 0.5f));
 
                 ScratchFade fade =
                     scratch.AddComponent<ScratchFade>();
 
                 fade.line = line;
                 fade.lifetime =
-                    Config.ScratchLifetime;
+                    Random.Range(
+                        Config.ScratchLifetime * 0.75f,
+                        Config.ScratchLifetime);
             }
         }
     }
@@ -119,28 +126,24 @@ namespace ScratchLab
         {
             if (line == null)
             {
-                Destroy(gameObject);
+                Object.Destroy(gameObject);
                 return;
             }
 
             timer += Time.deltaTime;
 
-            float alpha =
-                Mathf.Lerp(
-                    1f,
-                    0f,
-                    timer / lifetime);
+            float t = lifetime <= 0f
+                ? 1f
+                : Mathf.Clamp01(timer / lifetime);
 
-            Color color =
-                Config.ScratchColor;
-
-            color.a = alpha;
+            Color color = Config.ScratchColor;
+            color.a = Mathf.Lerp(1f, 0f, t);
 
             line.startColor = color;
             line.endColor = color;
 
             if (timer >= lifetime)
-                Destroy(gameObject);
+                Object.Destroy(gameObject);
         }
     }
 }
