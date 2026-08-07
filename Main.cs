@@ -1,37 +1,40 @@
 using System.Collections.Generic;
-using UnityEngine;
 using MelonLoader;
+using UnityEngine;
+
+[assembly: MelonInfo(typeof(ScratchLab.Main), "ScratchLab", "1.1.0", "Thatvrkidds")]
+[assembly: MelonGame("Stress Level Zero", "BONELAB")]
 
 namespace ScratchLab
 {
     public class Main : MelonMod
     {
-        private static readonly HashSet<int> scannedObjects =
-            new HashSet<int>();
-
+        private static readonly HashSet<int> scannedRoots = new HashSet<int>();
         private float nextScanTime;
 
         public override void OnInitializeMelon()
         {
-            LoggerInstance.Msg(
-                VersionInfo.FullName + " Loaded!");
+            LoggerInstance.Msg(VersionInfo.FullName + " Loaded!");
 
-            GameObject manager =
-                new GameObject("ScratchLab");
+            GameObject manager = GameObject.Find("ScratchLab");
 
-            Object.DontDestroyOnLoad(manager);
+            if (manager == null)
+            {
+                manager = new GameObject("ScratchLab");
+                Object.DontDestroyOnLoad(manager);
+            }
 
-            if (ScratchSystem.Instance == null)
+            if (manager.GetComponent<ScratchSystem>() == null)
                 manager.AddComponent<ScratchSystem>();
 
-            if (ScratchRenderer.Instance == null)
+            if (manager.GetComponent<ScratchRenderer>() == null)
                 manager.AddComponent<ScratchRenderer>();
 
-            if (BloodRenderer.Instance == null)
+            if (manager.GetComponent<BloodRenderer>() == null)
                 manager.AddComponent<BloodRenderer>();
 
-            MelonLogger.Msg(
-                "[ScratchLab] Systems initialized.");
+            MelonLogger.Msg("[ScratchLab] Systems initialized.");
+            MelonLogger.Msg("[ScratchLab] Knife scanner starting.");
         }
 
         public override void OnUpdate()
@@ -42,16 +45,13 @@ namespace ScratchLab
             if (Time.time < nextScanTime)
                 return;
 
-            nextScanTime = Time.time + 2f;
-
+            nextScanTime = Time.time + Config.ScanInterval;
             ScanForKnives();
         }
 
         private void ScanForKnives()
         {
-            GameObject[] objects =
-                Object.FindObjectsOfType<GameObject>();
-
+            GameObject[] objects = Object.FindObjectsOfType<GameObject>();
             int found = 0;
 
             foreach (GameObject obj in objects)
@@ -59,104 +59,141 @@ namespace ScratchLab
                 if (obj == null)
                     continue;
 
-                int id = obj.GetInstanceID();
-
-                if (scannedObjects.Contains(id))
+                if (!LooksLikeKnifeHierarchy(obj))
                     continue;
 
-                if (!LooksLikeKnife(obj))
+                GameObject root = GetWeaponRoot(obj);
+
+                if (root == null)
+                    root = obj;
+
+                int id = root.GetInstanceID();
+
+                if (scannedRoots.Contains(id))
                     continue;
 
-                scannedObjects.Add(id);
-
-                AttachKnifeComponents(obj);
-
+                scannedRoots.Add(id);
+                AttachKnifeComponents(root);
                 found++;
             }
 
             if (found > 0)
+                MelonLogger.Msg("[ScratchLab] Initialized " + found + " knife root(s).");
+        }
+
+        private static bool LooksLikeKnifeHierarchy(GameObject obj)
+        {
+            if (obj == null)
+                return false;
+
+            if (Utilities.NameContains(obj.name, Config.WeaponKeywords))
+                return true;
+
+            Transform child = obj.transform;
+
+            while (child != null)
             {
-                MelonLogger.Msg(
-                    "[ScratchLab] Found and initialized " +
-                    found +
-                    " possible knife object(s).");
+                if (Utilities.NameContains(child.name, Config.WeaponKeywords))
+                    return true;
+
+                child = child.parent;
             }
+
+            return false;
         }
 
-        private static bool LooksLikeKnife(GameObject obj)
+        private static GameObject GetWeaponRoot(GameObject obj)
         {
-            string name =
-                obj.name.ToLowerInvariant();
+            if (obj == null)
+                return null;
 
-            return
-                name.Contains("knife") ||
-                name.Contains("dagger") ||
-                name.Contains("blade") ||
-                name.Contains("sword") ||
-                name.Contains("shiv");
+            Rigidbody body = obj.GetComponentInParent<Rigidbody>();
+
+            if (body != null)
+                return body.gameObject;
+
+            return obj.transform.root != null
+                ? obj.transform.root.gameObject
+                : obj;
         }
 
-        private static void AttachKnifeComponents(
-            GameObject obj)
+        private static void AttachKnifeComponents(GameObject root)
         {
-            KnifeTracker tracker =
-                obj.GetComponent<KnifeTracker>();
+            KnifeTracker tracker = root.GetComponent<KnifeTracker>();
 
             if (tracker == null)
             {
-                tracker =
-                    obj.AddComponent<KnifeTracker>();
-
-                MelonLogger.Msg(
-                    "[ScratchLab] Added KnifeTracker to " +
-                    obj.name);
+                tracker = root.AddComponent<KnifeTracker>();
+                MelonLogger.Msg("[ScratchLab] Added KnifeTracker to " + root.name);
             }
 
-            KnifeDamageDetector detector =
-                obj.GetComponent<KnifeDamageDetector>();
+            Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
+            int detectorsAdded = 0;
 
-            if (detector == null)
+            foreach (Collider collider in colliders)
             {
-                detector =
-                    obj.AddComponent<KnifeDamageDetector>();
+                if (collider == null)
+                    continue;
 
-                MelonLogger.Msg(
-                    "[ScratchLab] Added KnifeDamageDetector to " +
-                    obj.name);
+                KnifeDamageDetector detector =
+                    collider.gameObject.GetComponent<KnifeDamageDetector>();
+
+                if (detector == null)
+                {
+                    detector = collider.gameObject.AddComponent<KnifeDamageDetector>();
+                    detectorsAdded++;
+                }
+
+                detector.SetTracker(tracker);
+                detector.isKnife = true;
             }
 
-            detector.isKnife = true;
+            if (detectorsAdded > 0)
+            {
+                MelonLogger.Msg(
+                    "[ScratchLab] Added " + detectorsAdded +
+                    " collision detector(s) to " + root.name);
+            }
         }
     }
 
     public class ScratchSystem : MonoBehaviour
     {
-        public static ScratchSystem Instance;
+        public static ScratchSystem Instance { get; private set; }
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Object.Destroy(this);
+                return;
+            }
+
             Instance = this;
+            MelonLogger.Msg("[ScratchLab] ScratchSystem initialized.");
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
         }
 
         public void AddScratch(
             GameObject npc,
             Vector3 hitPosition,
-            Vector3 hitNormal)
+            Vector3 hitNormal,
+            float strength)
         {
-            if (!Config.ModEnabled)
+            if (!Config.ModEnabled || npc == null)
                 return;
 
-            if (npc == null)
-                return;
-
-            ScratchRenderer renderer =
-                ScratchRenderer.Instance;
+            ScratchRenderer renderer = ScratchRenderer.Instance;
 
             if (renderer == null)
             {
                 MelonLogger.Warning(
-                    "[ScratchLab] ScratchRenderer is not initialized.");
-
+                    "[ScratchLab] AddScratch failed: ScratchRenderer is null.");
                 return;
             }
 
@@ -164,11 +201,10 @@ namespace ScratchLab
                 npc.transform,
                 hitPosition,
                 hitNormal,
-                1f);
+                Mathf.Clamp01(strength));
 
             MelonLogger.Msg(
-                "[ScratchLab] Scratch added to " +
-                npc.name);
+                "[ScratchLab] Scratch added to " + npc.name);
         }
     }
 
@@ -177,28 +213,32 @@ namespace ScratchLab
         public bool isKnife = true;
 
         private KnifeTracker tracker;
-        private float lastHitTime;
+        private float lastHitTime = -999f;
+
+        public void SetTracker(KnifeTracker value)
+        {
+            tracker = value;
+        }
 
         private void Awake()
         {
-            tracker =
-                GetComponent<KnifeTracker>();
+            if (tracker == null)
+                tracker = GetComponentInParent<KnifeTracker>();
 
             if (tracker == null)
-            {
-                tracker =
-                    gameObject.AddComponent<KnifeTracker>();
-            }
+                tracker = GetComponent<KnifeTracker>();
+
+            if (tracker == null)
+                tracker = gameObject.AddComponent<KnifeTracker>();
         }
 
-        private void OnCollisionEnter(
-            Collision collision)
+        private void OnCollisionEnter(Collision collision)
         {
-            if (!Config.ModEnabled)
+            if (!Config.ModEnabled || !isKnife)
                 return;
 
-            if (!isKnife)
-                return;
+            if (tracker == null)
+                tracker = GetComponentInParent<KnifeTracker>();
 
             if (tracker == null)
                 return;
@@ -206,37 +246,63 @@ namespace ScratchLab
             if (!tracker.CanScratch())
                 return;
 
-            if (Time.time - lastHitTime <
-                Config.HitCooldown)
+            if (Time.time - lastHitTime < Config.HitCooldown)
                 return;
 
-            if (collision == null)
+            if (collision == null || collision.contactCount <= 0)
                 return;
 
-            if (collision.contactCount <= 0)
-                return;
-
-            GameObject hitObject =
-                collision.gameObject;
+            GameObject hitObject = collision.gameObject;
 
             if (hitObject == null)
                 return;
 
-            if (!NPCDetector.IsNPC(hitObject))
+            GameObject npcObject = FindNPCRoot(hitObject);
+
+            if (npcObject == null)
                 return;
 
-            ContactPoint hit =
-                collision.contacts[0];
+            ContactPoint hit = collision.contacts[0];
 
             if (ScratchSystem.Instance == null)
+            {
+                MelonLogger.Warning(
+                    "[ScratchLab] Collision reached NPC, but ScratchSystem.Instance is null.");
                 return;
+            }
+
+            float strength = tracker.Strength();
 
             ScratchSystem.Instance.AddScratch(
-                hitObject,
+                npcObject,
                 hit.point,
-                hit.normal);
+                hit.normal,
+                strength);
 
             lastHitTime = Time.time;
+        }
+
+        private static GameObject FindNPCRoot(GameObject hitObject)
+        {
+            if (hitObject == null)
+                return null;
+
+            if (NPCDetector.IsNPC(hitObject))
+                return hitObject;
+
+            Transform parent = hitObject.transform.parent;
+
+            while (parent != null)
+            {
+                GameObject candidate = parent.gameObject;
+
+                if (NPCDetector.IsNPC(candidate))
+                    return candidate;
+
+                parent = parent.parent;
+            }
+
+            return null;
         }
     }
 }
