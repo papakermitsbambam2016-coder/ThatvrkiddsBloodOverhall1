@@ -1,27 +1,17 @@
 using UnityEngine;
+using MelonLoader;
 
 namespace ScratchLab
 {
     public class ScratchRenderer : MonoBehaviour
     {
-        public static ScratchRenderer Instance { get; private set; }
+        public static ScratchRenderer Instance;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
-            {
-                Object.Destroy(this);
-                return;
-            }
-
             Instance = this;
-            MelonLogger.Msg("[ScratchLab] ScratchRenderer initialized.");
-        }
 
-        private void OnDestroy()
-        {
-            if (Instance == this)
-                Instance = null;
+            MelonLogger.Msg("[ScratchLab] ScratchRenderer initialized.");
         }
 
         public void SpawnScratch(
@@ -31,10 +21,20 @@ namespace ScratchLab
             float strength)
         {
             if (target == null)
-                return;
+            {
+                MelonLogger.Warning(
+                    "[ScratchLab] SpawnScratch failed: target is null.");
 
-            if (normal.sqrMagnitude < 0.0001f)
-                normal = Vector3.up;
+                return;
+            }
+
+            if (normal.sqrMagnitude < 0.001f)
+            {
+                MelonLogger.Warning(
+                    "[ScratchLab] SpawnScratch failed: invalid hit normal.");
+
+                return;
+            }
 
             normal.Normalize();
 
@@ -42,17 +42,33 @@ namespace ScratchLab
                 Config.ScratchCountMin,
                 Config.ScratchCountMax + 1);
 
+            Vector3 tangent =
+                Vector3.Cross(normal, Vector3.up);
+
+            if (tangent.sqrMagnitude < 0.01f)
+            {
+                tangent =
+                    Vector3.Cross(normal, Vector3.right);
+            }
+
+            tangent.Normalize();
+
+            Vector3 across =
+                Vector3.Cross(normal, tangent);
+
+            across.Normalize();
+
             for (int i = 0; i < count; i++)
             {
-                GameObject scratch = new GameObject("ScratchMark");
-
-                scratch.transform.position =
-                    point + normal * Config.ScratchSurfaceOffset;
-
-                scratch.transform.rotation =
-                    Quaternion.LookRotation(normal);
+                GameObject scratch =
+                    new GameObject("ScratchMark");
 
                 scratch.transform.SetParent(target, true);
+
+                // Put the scratch slightly above the surface
+                // to prevent it from being hidden by the NPC.
+                scratch.transform.position =
+                    point + normal * 0.0015f;
 
                 LineRenderer line =
                     scratch.AddComponent<LineRenderer>();
@@ -60,58 +76,85 @@ namespace ScratchLab
                 line.useWorldSpace = false;
                 line.positionCount = 2;
                 line.loop = false;
-                line.alignment = LineAlignment.TransformZ;
-                line.textureMode = LineTextureMode.Stretch;
-                line.numCapVertices = 4;
-                line.numCornerVertices = 2;
 
-                float width = Random.Range(
-                    Config.ScratchMinWidth,
-                    Config.ScratchMaxWidth);
+                float width =
+                    Random.Range(
+                        Config.ScratchMinWidth,
+                        Config.ScratchMaxWidth);
 
                 line.startWidth = width;
-                line.endWidth = width * 0.45f;
+                line.endWidth = width * 0.55f;
 
-                line.material = MaterialManager.ScratchMaterial;
+                line.numCapVertices = 8;
+                line.numCornerVertices = 8;
 
-                float length = Random.Range(
-                    Config.ScratchMinLength,
-                    Config.ScratchMaxLength);
+                Shader shader =
+                    Shader.Find("Sprites/Default");
 
-                float angle = Random.Range(
-                    -Config.ScratchAngle,
-                    Config.ScratchAngle);
+                if (shader == null)
+                {
+                    MelonLogger.Warning(
+                        "[ScratchLab] Could not find Sprites/Default shader.");
 
-                Quaternion localRotation =
-                    Quaternion.Euler(0f, 0f, angle);
+                    Destroy(scratch);
+                    continue;
+                }
+
+                Material material =
+                    new Material(shader);
+
+                material.color =
+                    Config.ScratchColor;
+
+                line.material = material;
+
+                float length =
+                    Random.Range(
+                        Config.ScratchMinLength,
+                        Config.ScratchMaxLength);
+
+                float angle =
+                    Random.Range(-15f, 15f);
+
+                Quaternion rotation =
+                    Quaternion.AngleAxis(
+                        angle,
+                        normal);
 
                 Vector3 direction =
-                    localRotation * Vector3.right;
+                    rotation * tangent;
 
-                float offset = Random.Range(
-                    -Config.ScratchSpread,
-                    Config.ScratchSpread);
+                direction.Normalize();
 
-                Vector3 sideOffset =
-                    Vector3.up * offset;
+                Vector3 offset =
+                    across *
+                    Random.Range(-0.02f, 0.02f);
 
-                line.SetPosition(
-                    0,
-                    sideOffset - direction * (length * 0.5f));
+                Vector3 start =
+                    offset -
+                    direction *
+                    (length * 0.5f);
 
-                line.SetPosition(
-                    1,
-                    sideOffset + direction * (length * 0.5f));
+                Vector3 end =
+                    offset +
+                    direction *
+                    (length * 0.5f);
+
+                line.SetPosition(0, start);
+                line.SetPosition(1, end);
 
                 ScratchFade fade =
                     scratch.AddComponent<ScratchFade>();
 
                 fade.line = line;
                 fade.lifetime =
-                    Random.Range(
-                        Config.ScratchLifetime * 0.75f,
-                        Config.ScratchLifetime);
+                    Config.ScratchLifetime;
             }
+
+            MelonLogger.Msg(
+                "[ScratchLab] Spawned " +
+                count +
+                " scratch mark(s).");
         }
     }
 
@@ -126,24 +169,38 @@ namespace ScratchLab
         {
             if (line == null)
             {
-                Object.Destroy(gameObject);
+                Destroy(gameObject);
                 return;
             }
 
             timer += Time.deltaTime;
 
-            float t = lifetime <= 0f
-                ? 1f
-                : Mathf.Clamp01(timer / lifetime);
+            float progress =
+                Mathf.Clamp01(timer / lifetime);
 
-            Color color = Config.ScratchColor;
-            color.a = Mathf.Lerp(1f, 0f, t);
+            float alpha =
+                Mathf.Lerp(
+                    1f,
+                    0f,
+                    progress);
+
+            Color color =
+                Config.ScratchColor;
+
+            color.a = alpha;
 
             line.startColor = color;
             line.endColor = color;
 
             if (timer >= lifetime)
-                Object.Destroy(gameObject);
+            {
+                if (line.material != null)
+                {
+                    Destroy(line.material);
+                }
+
+                Destroy(gameObject);
+            }
         }
     }
 }
