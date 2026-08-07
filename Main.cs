@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using MelonLoader;
 
@@ -16,7 +15,11 @@ namespace ScratchLab
             if (!Config.ModEnabled)
                 return;
 
-            // Gameplay systems will be updated here later.
+            // Future updates:
+            // - Weapon scanning
+            // - NPC scanning
+            // - Blood cleanup
+            // - BoneMenu updates
         }
     }
 
@@ -41,7 +44,7 @@ namespace ScratchLab
 
             if (scratchEffect == null)
             {
-                MelonLogger.Warning("[ScratchLab] Scratch Effect is not assigned.");
+                MelonLogger.Warning("[ScratchLab] Scratch effect is not assigned!");
                 return;
             }
 
@@ -61,7 +64,16 @@ namespace ScratchLab
     {
         public bool isKnife = true;
 
+        private KnifeTracker tracker;
         private float lastHitTime;
+
+        private void Awake()
+        {
+            tracker = GetComponent<KnifeTracker>();
+
+            if (tracker == null)
+                tracker = gameObject.AddComponent<KnifeTracker>();
+        }
 
         private void OnCollisionEnter(Collision collision)
         {
@@ -69,6 +81,9 @@ namespace ScratchLab
                 return;
 
             if (!isKnife)
+                return;
+
+            if (!tracker.CanScratch())
                 return;
 
             if (Time.time - lastHitTime < Config.HitCooldown)
@@ -79,7 +94,7 @@ namespace ScratchLab
             if (hitObject == null)
                 return;
 
-            if (!hitObject.CompareTag("NPC"))
+            if (!NPCDetector.IsNPC(hitObject))
                 return;
 
             if (ScratchSystem.Instance == null)
