@@ -33,23 +33,32 @@ namespace ScratchLab
 
             main.startColor = Config.BloodColor;
 
-            main.startLifetime = Mathf.Lerp(
+            float lifetime = Mathf.Lerp(
                 0.35f,
                 Config.BloodLifetime,
                 strength
             );
 
-            main.startSpeed = Mathf.Lerp(
+            float speed = Mathf.Lerp(
                 Config.BloodMinSpeed,
                 Config.BloodMaxSpeed,
                 strength
             );
 
-            main.startSize = Mathf.Lerp(
+            float size = Mathf.Lerp(
                 Config.BloodMinSize,
                 Config.BloodMaxSize,
                 strength
             );
+
+            main.startLifetime =
+                new ParticleSystem.MinMaxCurve(lifetime);
+
+            main.startSpeed =
+                new ParticleSystem.MinMaxCurve(speed);
+
+            main.startSize =
+                new ParticleSystem.MinMaxCurve(size);
 
             int particleCount = Mathf.RoundToInt(
                 Mathf.Lerp(
@@ -60,22 +69,6 @@ namespace ScratchLab
             );
 
             main.maxParticles = particleCount;
-
-            ParticleSystem.EmissionModule emission =
-                particleSystem.emission;
-
-            emission.rateOverTime = 0;
-
-            ParticleSystem.Burst burst =
-                new ParticleSystem.Burst(
-                    0f,
-                    (short)particleCount
-                );
-
-            emission.SetBursts(new ParticleSystem.Burst[]
-            {
-                burst
-            });
 
             ParticleSystemRenderer renderer =
                 blood.GetComponent<ParticleSystemRenderer>();
@@ -88,6 +81,11 @@ namespace ScratchLab
 
             particleSystem.Play();
 
+            // Emit the particles directly instead of using
+            // ParticleSystem.Burst / EmissionModule.SetBursts,
+            // which are unavailable in the referenced API.
+            particleSystem.Emit(particleCount);
+
             Destroy(
                 blood,
                 Config.BloodLifetime + 1f
@@ -95,4 +93,3 @@ namespace ScratchLab
         }
     }
 }
-
