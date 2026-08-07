@@ -8,12 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+
     <Reference Include="MelonLoader">
       <HintPath>References/MelonLoader.dll</HintPath>
     </Reference>
 
     <Reference Include="Il2Cppmscorlib">
       <HintPath>References/Il2Cppmscorlib.dll</HintPath>
+    </Reference>
+
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>References/Il2CppInterop.Runtime.dll</HintPath>
+    </Reference>
+
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>References/Il2CppInterop.Common.dll</HintPath>
     </Reference>
 
     <Reference Include="Assembly-CSharp">
@@ -31,6 +40,7 @@
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>References/UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
+
   </ItemGroup>
 
 </Project>
