@@ -2,19 +2,21 @@ using System;
 using UnityEngine;
 using MelonLoader;
 
-namespace ThatvrkiddsBloodOverhall
+namespace ScratchLab
 {
     public class Main : MelonMod
     {
         public override void OnInitializeMelon()
         {
-            LoggerInstance.Msg("ThatvrkiddsBloodOverhall Loaded!");
+            LoggerInstance.Msg(VersionInfo.FullName + " Loaded!");
         }
 
         public override void OnUpdate()
         {
-            // Main update loop
-            // Damage detection hooks can be added here depending on SDK version
+            if (!Config.ModEnabled)
+                return;
+
+            // Gameplay systems will be updated here later.
         }
     }
 
@@ -24,56 +26,77 @@ namespace ThatvrkiddsBloodOverhall
 
         public GameObject scratchEffect;
 
-        void Awake()
+        private void Awake()
         {
             Instance = this;
         }
 
         public void AddScratch(GameObject npc, Vector3 hitPosition, Vector3 hitNormal)
         {
+            if (!Config.ModEnabled)
+                return;
+
+            if (npc == null)
+                return;
+
             if (scratchEffect == null)
             {
-                MelonLogger.Warning("Scratch effect not assigned!");
+                MelonLogger.Warning("[ScratchLab] Scratch Effect is not assigned.");
                 return;
             }
 
-            // Create scratch mark on NPC
             GameObject mark = Instantiate(
                 scratchEffect,
                 hitPosition,
                 Quaternion.LookRotation(hitNormal)
             );
 
-            mark.transform.SetParent(npc.transform);
+            mark.transform.SetParent(npc.transform, true);
 
-            MelonLogger.Msg(
-                "Scratch added to NPC: " + npc.ford
-            );
+            MelonLogger.Msg("[ScratchLab] Scratch added to " + npc.name);
         }
     }
 
     public class KnifeDamageDetector : MonoBehaviour
     {
-        public bool isKnife;
+        public bool isKnife = true;
+
+        private float lastHitTime;
 
         private void OnCollisionEnter(Collision collision)
         {
+            if (!Config.ModEnabled)
+                return;
+
             if (!isKnife)
+                return;
+
+            if (Time.time - lastHitTime < Config.HitCooldown)
                 return;
 
             GameObject hitObject = collision.gameObject;
 
-            // Check if object is an NPC
-            if (hitObject.CompareTag("NPC"))
-            {
-                ContactPoint hit = collision.contacts[0];
+            if (hitObject == null)
+                return;
 
-                ScratchSystem.Instance.AddScratch(
-                    hitObject,
-                    hit.point,
-                    hit.normal
-                );
-            }
+            if (!hitObject.CompareTag("NPC"))
+                return;
+
+            if (ScratchSystem.Instance == null)
+                return;
+
+            if (collision.contactCount == 0)
+                return;
+
+            ContactPoint hit = collision.contacts[0];
+
+            ScratchSystem.Instance.AddScratch(
+                hitObject,
+                hit.point,
+                hit.normal
+            );
+
+            lastHitTime = Time.time;
         }
     }
 }
