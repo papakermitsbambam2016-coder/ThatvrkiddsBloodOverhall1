@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 namespace ScratchLab
 {
@@ -22,18 +21,22 @@ namespace ScratchLab
                 Config.ScratchCountMin,
                 Config.ScratchCountMax + 1);
 
-            Vector3 tangent = Vector3.Cross(normal, Vector3.up);
+            Vector3 tangent =
+                Vector3.Cross(normal, Vector3.up);
 
             if (tangent.sqrMagnitude < 0.01f)
-                tangent = Vector3.Cross(normal, Vector3.right);
+                tangent =
+                    Vector3.Cross(normal, Vector3.right);
 
             tangent.Normalize();
 
-            Vector3 across = Vector3.Cross(normal, tangent);
+            Vector3 across =
+                Vector3.Cross(normal, tangent);
 
             for (int i = 0; i < count; i++)
             {
-                GameObject scratch = new GameObject("ScratchMark");
+                GameObject scratch =
+                    new GameObject("ScratchMark");
 
                 scratch.transform.SetParent(target, true);
                 scratch.transform.position = point;
@@ -42,7 +45,6 @@ namespace ScratchLab
                     scratch.AddComponent<LineRenderer>();
 
                 line.useWorldSpace = false;
-
                 line.positionCount = 2;
 
                 float width =
@@ -56,8 +58,9 @@ namespace ScratchLab
                 line.numCapVertices = 8;
                 line.numCornerVertices = 8;
 
-                line.material = new Material(
-                    Shader.Find("Sprites/Default"));
+                line.material =
+                    new Material(
+                        Shader.Find("Sprites/Default"));
 
                 line.material.color =
                     Config.ScratchColor;
@@ -95,41 +98,49 @@ namespace ScratchLab
                 line.SetPosition(0, start);
                 line.SetPosition(1, end);
 
-                StartCoroutine(
-                    FadeScratch(
-                        line,
-                        scratch));
+                ScratchFade fade =
+                    scratch.AddComponent<ScratchFade>();
+
+                fade.line = line;
+                fade.lifetime =
+                    Config.ScratchLifetime;
             }
         }
+    }
 
-        private IEnumerator FadeScratch(
-            LineRenderer line,
-            GameObject obj)
+    public class ScratchFade : MonoBehaviour
+    {
+        public LineRenderer line;
+        public float lifetime;
+
+        private float timer;
+
+        private void Update()
         {
-            Color color = Config.ScratchColor;
-
-            float timer = 0f;
-
-            while (timer < Config.ScratchLifetime)
+            if (line == null)
             {
-                timer += Time.deltaTime;
-
-                float alpha =
-                    Mathf.Lerp(
-                        1f,
-                        0f,
-                        timer /
-                        Config.ScratchLifetime);
-
-                color.a = alpha;
-
-                line.startColor = color;
-                line.endColor = color;
-
-                yield return null;
+                Destroy(gameObject);
+                return;
             }
 
-            Destroy(obj);
+            timer += Time.deltaTime;
+
+            float alpha =
+                Mathf.Lerp(
+                    1f,
+                    0f,
+                    timer / lifetime);
+
+            Color color =
+                Config.ScratchColor;
+
+            color.a = alpha;
+
+            line.startColor = color;
+            line.endColor = color;
+
+            if (timer >= lifetime)
+                Destroy(gameObject);
         }
     }
 }
