@@ -1,55 +1,37 @@
-
 using UnityEngine;
 
 namespace ScratchLab
 {
     internal static class Config
     {
-        // =========================
-        // General
-        // =========================
-
         public static bool ModEnabled = true;
-        public static bool DebugMode = false;
+        public static bool DebugMode = true;
 
-        // =========================
-        // Weapon Detection
-        // =========================
-
-        public static float PickupDelay = 0.50f;
-        public static float ScanInterval = 1.25f;
+        public static float PickupDelay = 0.20f;
+        public static float ScanInterval = 1.00f;
 
         public static float MinimumSwipeDistance = 0.035f;
-        public static float MinimumSwipeSpeed = 0.75f;
-        public static float MaximumSwipeSpeed = 10.0f;
+        public static float MinimumSwipeSpeed = 0.35f;
+        public static float MaximumSwipeSpeed = 12.0f;
 
-        public static float HitCooldown = 0.20f;
-
-        // =========================
-        // Damage
-        // =========================
+        public static float HitCooldown = 0.15f;
 
         public static float MinimumDamage = 1.0f;
         public static float MaximumDamage = 15.0f;
 
-        // =========================
-        // Scratch Marks
-        // =========================
+        public static int ScratchCountMin = 2;
+        public static int ScratchCountMax = 4;
 
-        public static int ScratchCountMin = 4;
-        public static int ScratchCountMax = 7;
+        public static float ScratchMinLength = 0.045f;
+        public static float ScratchMaxLength = 0.13f;
 
-        public static float ScratchMinLength = 0.05f;
-        public static float ScratchMaxLength = 0.16f;
-
-        public static float ScratchMinWidth = 0.0035f;
-        public static float ScratchMaxWidth = 0.0065f;
+        public static float ScratchMinWidth = 0.0012f;
+        public static float ScratchMaxWidth = 0.0028f;
 
         public static float ScratchLifetime = 18f;
-
-        // =========================
-        // Blood
-        // =========================
+        public static float ScratchSurfaceOffset = 0.003f;
+        public static float ScratchSpread = 0.012f;
+        public static float ScratchAngle = 12f;
 
         public static int BloodMinParticles = 8;
         public static int BloodMaxParticles = 40;
@@ -62,25 +44,13 @@ namespace ScratchLab
 
         public static float BloodLifetime = 1.0f;
 
-        // =========================
-        // Audio
-        // =========================
-
         public static float MinVolume = 0.15f;
         public static float MaxVolume = 0.40f;
-
-        // =========================
-        // Performance
-        // =========================
 
         public static int MaxScratchMarks = 150;
         public static int MaxBloodEffects = 80;
 
-        public static bool UseObjectPooling = true;
-
-        // =========================
-        // Supported Weapons
-        // =========================
+        public static bool UseObjectPooling = false;
 
         public static readonly string[] WeaponKeywords =
         {
@@ -100,10 +70,6 @@ namespace ScratchLab
             "cleaver"
         };
 
-        // =========================
-        // NPC Detection
-        // =========================
-
         public static readonly string[] NPCKeywords =
         {
             "ford",
@@ -112,10 +78,6 @@ namespace ScratchLab
             "agent",
             "peasant"
         };
-
-        // =========================
-        // Colors
-        // =========================
 
         public static Color BloodColor =
             new Color(0.46f, 0.01f, 0.01f, 0.90f);
