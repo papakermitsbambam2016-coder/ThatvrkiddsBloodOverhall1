@@ -20,76 +20,74 @@ namespace ScratchLab
             blood.transform.position = point + normal * 0.01f;
             blood.transform.rotation = Quaternion.LookRotation(normal);
 
-            ParticleSystem particleSystem =
-                blood.AddComponent<ParticleSystem>();
+            ParticleSystem ps = blood.AddComponent<ParticleSystem>();
 
-            ParticleSystem.MainModule main =
-                particleSystem.main;
-
-            main.loop = false;
-            main.playOnAwake = false;
-            main.simulationSpace =
-                ParticleSystemSimulationSpace.World;
-
-            main.startColor = Config.BloodColor;
-
-            float lifetime = Mathf.Lerp(
-                0.35f,
-                Config.BloodLifetime,
-                strength
-            );
-
-            float speed = Mathf.Lerp(
-                Config.BloodMinSpeed,
-                Config.BloodMaxSpeed,
-                strength
-            );
-
-            float size = Mathf.Lerp(
-                Config.BloodMinSize,
-                Config.BloodMaxSize,
-                strength
-            );
-
-            main.startLifetime =
-                new ParticleSystem.MinMaxCurve(lifetime);
-
-            main.startSpeed =
-                new ParticleSystem.MinMaxCurve(speed);
-
-            main.startSize =
-                new ParticleSystem.MinMaxCurve(size);
+            ps.loop = false;
+            ps.playOnAwake = false;
 
             int particleCount = Mathf.RoundToInt(
                 Mathf.Lerp(
                     Config.BloodMinParticles,
                     Config.BloodMaxParticles,
-                    strength
-                )
-            );
+                    strength));
 
-            main.maxParticles = particleCount;
+            particleCount = Mathf.Max(1, particleCount);
 
             ParticleSystemRenderer renderer =
                 blood.GetComponent<ParticleSystemRenderer>();
 
             if (renderer != null)
             {
-                renderer.material =
-                    MaterialManager.BloodMaterial;
+                renderer.material = MaterialManager.BloodMaterial;
             }
 
-            particleSystem.Play();
+            ps.Emit(particleCount);
 
-            // Emit the particles directly instead of using
-            // ParticleSystem.Burst / EmissionModule.SetBursts,
-            // which are unavailable in the referenced API.
-            particleSystem.Emit(particleCount);
+            ParticleSystem.Particle[] particles =
+                new ParticleSystem.Particle[particleCount];
+
+            int count = ps.GetParticles(particles);
+
+            float lifetime = Mathf.Lerp(
+                0.35f,
+                Config.BloodLifetime,
+                strength);
+
+            float speed = Mathf.Lerp(
+                Config.BloodMinSpeed,
+                Config.BloodMaxSpeed,
+                strength);
+
+            float size = Mathf.Lerp(
+                Config.BloodMinSize,
+                Config.BloodMaxSize,
+                strength);
+
+            for (int i = 0; i < count; i++)
+            {
+                particles[i].remainingLifetime = lifetime;
+                particles[i].startLifetime = lifetime;
+                particles[i].startSize = size;
+
+                Vector3 direction =
+                    normal +
+                    Random.insideUnitSphere * 0.35f;
+
+                if (direction.sqrMagnitude > 0.001f)
+                    direction.Normalize();
+
+                particles[i].velocity =
+                    direction * speed;
+
+                particles[i].startColor =
+                    Config.BloodColor;
+            }
+
+            ps.SetParticles(particles, count);
 
             Destroy(
                 blood,
-                Config.BloodLifetime + 1f
-            );
+                Config.BloodLifetime + 1f);
         }
     }
 }
