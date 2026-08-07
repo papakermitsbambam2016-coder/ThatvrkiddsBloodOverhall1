@@ -4,42 +4,57 @@ namespace ScratchLab
 {
     public class BloodRenderer : MonoBehaviour
     {
-        public static BloodRenderer Instance;
+        public static BloodRenderer Instance { get; private set; }
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Object.Destroy(this);
+                return;
+            }
+
             Instance = this;
         }
 
-        public void SpawnBlood(Vector3 point, Vector3 normal, float strength)
+        public void SpawnBlood(
+            Vector3 point,
+            Vector3 normal,
+            float strength)
         {
             strength = Mathf.Clamp01(strength);
 
-            GameObject blood = new GameObject("ScratchBlood");
+            GameObject blood =
+                new GameObject("ScratchBlood");
 
-            blood.transform.position = point + normal * 0.01f;
-            blood.transform.rotation = Quaternion.LookRotation(normal);
+            blood.transform.position =
+                point + normal * 0.01f;
 
-            ParticleSystem ps = blood.AddComponent<ParticleSystem>();
+            if (normal.sqrMagnitude > 0.0001f)
+                blood.transform.rotation =
+                    Quaternion.LookRotation(normal);
+
+            ParticleSystem ps =
+                blood.AddComponent<ParticleSystem>();
 
             ps.loop = false;
             ps.playOnAwake = false;
 
-            int particleCount = Mathf.RoundToInt(
-                Mathf.Lerp(
-                    Config.BloodMinParticles,
-                    Config.BloodMaxParticles,
-                    strength));
-
-            particleCount = Mathf.Max(1, particleCount);
+            int particleCount =
+                Mathf.Max(
+                    1,
+                    Mathf.RoundToInt(
+                        Mathf.Lerp(
+                            Config.BloodMinParticles,
+                            Config.BloodMaxParticles,
+                            strength)));
 
             ParticleSystemRenderer renderer =
                 blood.GetComponent<ParticleSystemRenderer>();
 
             if (renderer != null)
-            {
-                renderer.material = MaterialManager.BloodMaterial;
-            }
+                renderer.material =
+                    MaterialManager.BloodMaterial;
 
             ps.Emit(particleCount);
 
@@ -48,20 +63,23 @@ namespace ScratchLab
 
             int count = ps.GetParticles(particles);
 
-            float lifetime = Mathf.Lerp(
-                0.35f,
-                Config.BloodLifetime,
-                strength);
+            float lifetime =
+                Mathf.Lerp(
+                    0.35f,
+                    Config.BloodLifetime,
+                    strength);
 
-            float speed = Mathf.Lerp(
-                Config.BloodMinSpeed,
-                Config.BloodMaxSpeed,
-                strength);
+            float speed =
+                Mathf.Lerp(
+                    Config.BloodMinSpeed,
+                    Config.BloodMaxSpeed,
+                    strength);
 
-            float size = Mathf.Lerp(
-                Config.BloodMinSize,
-                Config.BloodMaxSize,
-                strength);
+            float size =
+                Mathf.Lerp(
+                    Config.BloodMinSize,
+                    Config.BloodMaxSize,
+                    strength);
 
             for (int i = 0; i < count; i++)
             {
@@ -85,7 +103,7 @@ namespace ScratchLab
 
             ps.SetParticles(particles, count);
 
-            Destroy(
+            Object.Destroy(
                 blood,
                 Config.BloodLifetime + 1f);
         }
