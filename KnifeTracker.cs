@@ -6,13 +6,25 @@ namespace ScratchLab
     {
         private Vector3 lastPosition;
         private float spawnTime;
+        private bool initialized;
 
         public float CurrentSpeed { get; private set; }
 
-        private void Start()
+        private void Awake()
         {
             lastPosition = transform.position;
             spawnTime = Time.time;
+            initialized = true;
+        }
+
+        private void OnEnable()
+        {
+            if (!initialized)
+            {
+                lastPosition = transform.position;
+                spawnTime = Time.time;
+                initialized = true;
+            }
         }
 
         private void Update()
@@ -22,10 +34,12 @@ namespace ScratchLab
             if (delta <= 0f)
                 return;
 
-            CurrentSpeed =
-                Vector3.Distance(transform.position, lastPosition) / delta;
+            Vector3 currentPosition = transform.position;
 
-            lastPosition = transform.position;
+            CurrentSpeed =
+                Vector3.Distance(currentPosition, lastPosition) / delta;
+
+            lastPosition = currentPosition;
         }
 
         public bool CanScratch()
@@ -36,7 +50,8 @@ namespace ScratchLab
             if (Time.time - spawnTime < Config.PickupDelay)
                 return false;
 
-            return CurrentSpeed >= Config.MinimumSwipeSpeed;
+            return CurrentSpeed >= Config.MinimumSwipeSpeed &&
+                   CurrentSpeed <= Config.MaximumSwipeSpeed;
         }
 
         public float Strength()
