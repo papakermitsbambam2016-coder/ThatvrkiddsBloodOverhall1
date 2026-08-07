@@ -19,42 +19,38 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Find project
-        shell: bash
+      - name: Check project files
         run: |
-          echo "Looking for project files..."
+          echo "Working directory:"
+          pwd
 
-          find "$GITHUB_WORKSPACE" -type f -name "*.csproj" -print
-
-          PROJECT=$(find "$GITHUB_WORKSPACE" -type f -name "*.csproj" -print -quit)
-
-          if [ -z "$PROJECT" ]; then
-            echo "No .csproj file found."
-            exit 1
-          fi
-
-          echo "Using project:"
-          printf '<%s>\n' "$PROJECT"
-
-          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
+          echo ""
+          echo "Project files:"
+          find . -maxdepth 3 -type f | sort
 
       - name: Restore
-        run: |
-          echo "Restoring:"
-          printf '<%s>\n' "$PROJECT"
-          dotnet restore "$PROJECT"
+        run: dotnet restore ./ScratchLab.csproj
 
       - name: Build
-        run: |
-          echo "Building:"
-          printf '<%s>\n' "$PROJECT"
-          dotnet build "$PROJECT" --configuration Release --no-restore
+        run: dotnet build ./ScratchLab.csproj --configuration Release --no-restore
 
-      - name: Show generated DLL
+      - name: Check DLL
         run: |
-          echo "Looking for generated DLL..."
-          find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.dll" -print
-      - name: Show generated DLL
-        run: |
-          echo "Looking for generated DLL..."
-          find "$GITHUB_WORKSPACE" -type f -name "ScratchLab.dll" -print
+          echo "Built DLL:"
+          find . -type f -name "ScratchLab.dll" -print
+
+      - name: Upload ScratchLab DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScratchLab-DLL
+          path: ./bin/Release/net6.0/ScratchLab.dll
+          if-no-files-found: error
+Select Build ScratchLab.
+
+Run the workflow, or push a change to main.
+
+Wait for the green ✅ Success.
+
+Open that successful workflow run.
+
+Scroll down to Art
